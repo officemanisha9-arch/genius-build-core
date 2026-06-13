@@ -175,25 +175,28 @@ function ChatWindow({ threadId }: { threadId: string }) {
             const text = extractText(m);
             const isUser = m.role === "user";
             return (
-              <Message key={m.id} from={m.role}>
-                <MessageContent
-                  className={cn(
-                    isUser
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-transparent p-0 text-foreground",
-                  )}
-                >
-                  {isUser ? (
-                    <div className="whitespace-pre-wrap">{text}</div>
-                  ) : (
-                    <div className="prose prose-sm dark:prose-invert max-w-none prose-headings:font-display prose-headings:tracking-tight prose-pre:bg-secondary prose-pre:text-foreground prose-code:text-ember prose-code:before:content-none prose-code:after:content-none">
-                      <ReactMarkdown>{text}</ReactMarkdown>
-                    </div>
-                  )}
-                </MessageContent>
-              </Message>
+              <div key={m.id} className="animate-fade-up">
+                <Message from={m.role}>
+                  <MessageContent
+                    className={cn(
+                      isUser
+                        ? "bg-primary text-primary-foreground shadow-sm"
+                        : "bg-transparent p-0 text-foreground",
+                    )}
+                  >
+                    {isUser ? (
+                      <div className="whitespace-pre-wrap">{text}</div>
+                    ) : (
+                      <div className="prose prose-sm dark:prose-invert max-w-none prose-headings:font-display prose-headings:tracking-tight prose-pre:bg-secondary prose-pre:text-foreground prose-code:text-ember prose-code:before:content-none prose-code:after:content-none">
+                        <ReactMarkdown>{text}</ReactMarkdown>
+                      </div>
+                    )}
+                  </MessageContent>
+                </Message>
+              </div>
             );
           })}
+
           {status === "submitted" && (
             <div className="py-2">
               <Shimmer>Thinking…</Shimmer>
