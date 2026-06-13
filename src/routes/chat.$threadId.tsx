@@ -140,13 +140,13 @@ function ChatWindow({ threadId }: { threadId: string }) {
   const ModeIcon = Mode.icon;
   const isLoading = status === "submitted" || status === "streaming";
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const submit = () => {
     const v = input.trim();
     if (!v || isLoading) return;
     sendMessage({ text: v });
     setInput("");
   };
+
 
   return (
     <div className="flex h-[calc(100vh-3rem)] flex-col">
@@ -209,8 +209,8 @@ function ChatWindow({ threadId }: { threadId: string }) {
       </Conversation>
 
       <div className="border-t border-border bg-background/80 px-4 py-4 backdrop-blur">
-        <form onSubmit={handleSubmit} className="mx-auto max-w-3xl">
-          <PromptInput onSubmit={handleSubmit}>
+        <div className="mx-auto max-w-3xl">
+          <PromptInput onSubmit={() => submit()}>
             <PromptInputTextarea
               ref={textareaRef}
               value={input}
@@ -221,8 +221,9 @@ function ChatWindow({ threadId }: { threadId: string }) {
               <PromptInputSubmit status={status} disabled={!input.trim()} />
             </PromptInputFooter>
           </PromptInput>
-        </form>
+        </div>
       </div>
+
     </div>
   );
 }
