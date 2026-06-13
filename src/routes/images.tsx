@@ -78,20 +78,29 @@ function ImagesPage() {
   };
 
   return (
-    <div className="grain min-h-[calc(100vh-3rem)]">
-      <div className="mx-auto max-w-5xl px-6 py-10">
-        <div className="mb-8 flex items-end justify-between gap-4">
-          <div>
-            <div className="mb-2 inline-flex items-center gap-2 text-xs text-muted-foreground">
-              <ImageIcon className="h-3.5 w-3.5" /> Image Studio
-            </div>
-            <h1 className="text-display text-4xl font-semibold">
-              Describe it. <span className="italic text-ember">Make it.</span>
-            </h1>
+    <div className="grain relative min-h-[calc(100vh-3rem)] overflow-hidden">
+      <div className="aurora" aria-hidden />
+      <div className="mx-auto max-w-5xl px-6 py-12">
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, ease: [0.2, 0.7, 0.2, 1] }}
+          className="mb-8"
+        >
+          <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-border bg-card/70 px-3 py-1 text-xs text-muted-foreground backdrop-blur">
+            <ImageIcon className="h-3.5 w-3.5" /> Image Studio
           </div>
-        </div>
+          <h1 className="text-display text-5xl font-semibold leading-[0.95] md:text-6xl">
+            Describe it. <span className="italic shimmer-text">Make it.</span>
+          </h1>
+        </motion.div>
 
-        <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7, delay: 0.08, ease: [0.2, 0.7, 0.2, 1] }}
+          className="rounded-2xl border border-border bg-card/90 p-4 shadow-lg backdrop-blur"
+        >
           <Textarea
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
@@ -104,76 +113,104 @@ function ImagesPage() {
               }
             }}
           />
-          <div className="flex items-center justify-between gap-2 pt-2">
+          <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
             <div className="flex flex-wrap gap-1.5">
               {SUGGESTIONS.map((s) => (
                 <button
                   key={s}
                   type="button"
                   onClick={() => setPrompt(s)}
-                  className="rounded-full border border-border bg-background px-3 py-1 text-xs text-muted-foreground transition-colors hover:border-ember hover:text-ember"
+                  className="rounded-full border border-border bg-background px-3 py-1 text-xs text-muted-foreground transition-all hover:border-ember hover:text-ember hover:-translate-y-0.5"
                 >
                   {s}
                 </button>
               ))}
             </div>
-            <Button onClick={() => generate()} disabled={loading || !prompt.trim()}>
+            <Button
+              onClick={() => generate()}
+              disabled={loading || !prompt.trim()}
+              className="group relative overflow-hidden"
+            >
               {loading ? (
                 <>
                   <Loader2 className="mr-1 h-4 w-4 animate-spin" /> Generating
                 </>
               ) : (
                 <>
-                  <Sparkles className="mr-1 h-4 w-4" /> Generate
+                  <Sparkles className="mr-1 h-4 w-4 transition-transform group-hover:rotate-12" />
+                  Generate
                 </>
               )}
             </Button>
           </div>
-        </div>
+        </motion.div>
 
-        <h2 className="mt-12 mb-4 text-display text-xl font-semibold">Recent</h2>
-        {items.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-border p-10 text-center text-sm text-muted-foreground">
+        <h2 className="mt-14 mb-4 text-display text-xl font-semibold">Recent</h2>
+        {items.length === 0 && !loading ? (
+          <div className="rounded-xl border border-dashed border-border p-12 text-center text-sm text-muted-foreground">
             Your generations will appear here.
           </div>
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
-            {items.map((i) => (
-              <div
-                key={i.id}
-                className="group relative overflow-hidden rounded-xl border border-border bg-card"
-              >
-                <img
-                  src={i.url}
-                  alt={i.prompt}
-                  className="aspect-square w-full object-cover"
-                />
-                <div className="p-3">
-                  <p className="line-clamp-2 text-xs text-muted-foreground">{i.prompt}</p>
-                  <div className="mt-2 flex items-center justify-between">
-                    <a
-                      href={i.url}
-                      download={`atelier-${i.id}.png`}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="inline-flex items-center gap-1 text-xs text-ember hover:underline"
-                    >
-                      <Download className="h-3 w-3" /> Save
-                    </a>
-                    <button
-                      onClick={() => remove(i.id)}
-                      className="text-xs text-muted-foreground hover:text-destructive"
-                      aria-label="Delete image"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
+            <AnimatePresence mode="popLayout">
+              {loading && (
+                <motion.div
+                  key="skeleton"
+                  initial={{ opacity: 0, scale: 0.96 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.96 }}
+                  className="relative overflow-hidden rounded-xl border border-border bg-card"
+                >
+                  <div className="aspect-square w-full bg-gradient-to-br from-secondary via-muted to-secondary bg-[length:200%_100%] animate-[shimmer-line_2s_linear_infinite]" />
+                  <div className="p-3 text-xs text-muted-foreground">Generating…</div>
+                </motion.div>
+              )}
+              {items.map((i, idx) => (
+                <motion.div
+                  key={i.id}
+                  layout
+                  initial={{ opacity: 0, y: 14, scale: 0.97 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  transition={{ duration: 0.45, delay: idx * 0.03, ease: [0.2, 0.7, 0.2, 1] }}
+                  whileHover={{ y: -4 }}
+                  className="group relative overflow-hidden rounded-xl border border-border bg-card hover-lift"
+                >
+                  <div className="overflow-hidden">
+                    <img
+                      src={i.url}
+                      alt={i.prompt}
+                      className="aspect-square w-full object-cover transition-transform duration-700 group-hover:scale-105"
+                    />
                   </div>
-                </div>
-              </div>
-            ))}
+                  <div className="p-3">
+                    <p className="line-clamp-2 text-xs text-muted-foreground">{i.prompt}</p>
+                    <div className="mt-2 flex items-center justify-between">
+                      <a
+                        href={i.url}
+                        download={`atelier-${i.id}.png`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-1 text-xs text-ember hover:underline"
+                      >
+                        <Download className="h-3 w-3" /> Save
+                      </a>
+                      <button
+                        onClick={() => remove(i.id)}
+                        className="text-muted-foreground hover:text-destructive"
+                        aria-label="Delete image"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </AnimatePresence>
           </div>
         )}
       </div>
     </div>
   );
 }
+
