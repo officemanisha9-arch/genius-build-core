@@ -1,10 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Download, ImageIcon, Loader2, Sparkles, Trash2 } from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { imageStore, type ImageItem } from "@/lib/threads";
+
 
 export const Route = createFileRoute("/images")({
   head: () => ({
