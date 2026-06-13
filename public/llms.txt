@@ -1,0 +1,7 @@
+# Atelier
+
+> Atelier is an AI content studio for writing, brainstorming, code, and image generation. All conversations are stored locally in the user's browser.
+
+## Pages
+- [Home](/): Overview and entry points into each studio mode
+- [Image Studio](/images): Generate images from text prompts
