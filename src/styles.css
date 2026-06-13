@@ -151,7 +151,82 @@
     letter-spacing: -0.025em;
   }
   .grain {
-    background-image: radial-gradient(oklch(0.18 0.025 60 / 0.04) 1px, transparent 1px);
+    position: relative;
+  }
+  .grain::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(oklch(0.18 0.025 60 / 0.05) 1px, transparent 1px);
     background-size: 4px 4px;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .grain > * {
+    position: relative;
+    z-index: 1;
+  }
+  .aurora {
+    position: absolute;
+    inset: -20% -10% auto -10%;
+    height: 80vh;
+    background:
+      radial-gradient(40% 60% at 20% 30%, oklch(0.65 0.18 38 / 0.18), transparent 60%),
+      radial-gradient(50% 60% at 80% 20%, oklch(0.7 0.12 200 / 0.14), transparent 60%),
+      radial-gradient(40% 50% at 60% 80%, oklch(0.78 0.14 90 / 0.18), transparent 60%);
+    filter: blur(40px);
+    pointer-events: none;
+    z-index: 0;
+    animation: aurora-drift 18s ease-in-out infinite alternate;
   }
 }
+
+@keyframes aurora-drift {
+  0% { transform: translate3d(0, 0, 0) scale(1); }
+  100% { transform: translate3d(-4%, 2%, 0) scale(1.08); }
+}
+
+@keyframes fade-up {
+  0% { opacity: 0; transform: translateY(14px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes shimmer-line {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@layer utilities {
+  .animate-fade-up {
+    animation: fade-up 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  }
+  .shimmer-text {
+    background: linear-gradient(
+      90deg,
+      var(--foreground) 0%,
+      var(--foreground) 40%,
+      var(--ember) 50%,
+      var(--foreground) 60%,
+      var(--foreground) 100%
+    );
+    background-size: 200% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: shimmer-line 4s linear infinite;
+  }
+  .hover-lift {
+    transition: transform 280ms cubic-bezier(0.2, 0.7, 0.2, 1),
+                box-shadow 280ms cubic-bezier(0.2, 0.7, 0.2, 1),
+                border-color 200ms;
+  }
+  .hover-lift:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 40px -16px oklch(0.18 0.025 60 / 0.25);
+  }
+  .ring-ember-glow {
+    box-shadow: 0 0 0 1px oklch(0.65 0.18 38 / 0.4),
+                0 8px 32px -8px oklch(0.65 0.18 38 / 0.3);
+  }
+}
+
