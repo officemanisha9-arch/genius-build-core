@@ -16,14 +16,17 @@ export const Route = createFileRoute("/api/generate-image")({
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            model: "google/gemini-2.5-flash-image",
+            model: "openai/gpt-image-2",
             prompt,
+            quality: "low",
+            size: "1024x1024",
             n: 1,
           }),
         });
 
         if (!upstream.ok) {
           const text = await upstream.text();
+          console.error("generate-image upstream error", upstream.status, text);
           return new Response(text, { status: upstream.status });
         }
         const data = (await upstream.json()) as {
