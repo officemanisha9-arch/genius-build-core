@@ -51,7 +51,7 @@ export function VoiceButton({
       onClick={handleClick}
       className={cn(
         "relative transition-all",
-        listening && "bg-ember text-ember-foreground hover:bg-ember/90",
+        listening && "bg-ember text-cream hover:bg-ember/90",
         className,
       )}
       aria-label={listening ? "Stop voice input" : "Start voice input"}
