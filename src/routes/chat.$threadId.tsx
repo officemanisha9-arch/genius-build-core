@@ -25,6 +25,7 @@ import {
   type ThreadMode,
 } from "@/lib/threads";
 import { cn } from "@/lib/utils";
+import { VoiceButton } from "@/components/VoiceButton";
 
 export const Route = createFileRoute("/chat/$threadId")({
   head: () => ({
