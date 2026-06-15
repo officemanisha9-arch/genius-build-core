@@ -221,7 +221,12 @@ function ChatWindow({ threadId }: { threadId: string }) {
               onChange={(e) => setInput(e.target.value)}
               placeholder={Mode.placeholder}
             />
-            <PromptInputFooter className="justify-end">
+            <PromptInputFooter className="justify-between">
+              <VoiceButton
+                onTranscript={(t) =>
+                  setInput((prev) => (prev ? prev + " " + t : t))
+                }
+              />
               <PromptInputSubmit status={status} disabled={!input.trim()} />
             </PromptInputFooter>
           </PromptInput>
