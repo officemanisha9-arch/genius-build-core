@@ -29,16 +29,28 @@ export function VoiceButton({
       autoSubmit?.();
     },
     onInterim,
+    onError: (_code, message) => toast.error(message),
   });
 
   useEffect(() => {
     if (interim && onInterim) onInterim(interim);
   }, [interim, onInterim]);
 
-  const handleClick = () => {
+  const handleClick = async () => {
     if (!supported) {
       toast.error("Voice input isn't supported in this browser. Try Chrome or Edge.");
       return;
+    }
+    // Pre-request mic permission so the browser shows the prompt explicitly.
+    // SpeechRecognition otherwise fails silently with 'not-allowed' in iframes.
+    if (!listening && navigator.mediaDevices?.getUserMedia) {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        stream.getTracks().forEach((t) => t.stop());
+      } catch {
+        toast.error("Microphone access denied. Open the preview in a new tab and allow the mic.");
+        return;
+      }
     }
     toggle();
   };

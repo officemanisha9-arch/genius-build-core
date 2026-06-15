@@ -24,33 +24,39 @@ export interface UseVoiceInputOptions {
   continuous?: boolean;
   onFinal?: (text: string) => void;
   onInterim?: (text: string) => void;
+  onError?: (code: string, message: string) => void;
 }
 
 export function useVoiceInput(opts: UseVoiceInputOptions = {}) {
-  const { lang = "en-US", continuous = false, onFinal, onInterim } = opts;
+  const { lang = "en-US", continuous = false, onFinal, onInterim, onError } = opts;
   const [listening, setListening] = useState(false);
   const [supported, setSupported] = useState(false);
   const [interim, setInterim] = useState("");
   const recRef = useRef<SpeechRecognitionLike | null>(null);
   const finalRef = useRef(onFinal);
   const interimRef = useRef(onInterim);
+  const errorRef = useRef(onError);
 
   useEffect(() => {
     finalRef.current = onFinal;
     interimRef.current = onInterim;
-  }, [onFinal, onInterim]);
+    errorRef.current = onError;
+  }, [onFinal, onInterim, onError]);
 
   useEffect(() => {
     setSupported(!!getRecognitionCtor());
   }, []);
 
   const stop = useCallback(() => {
-    recRef.current?.stop();
+    try { recRef.current?.stop(); } catch {}
   }, []);
 
   const start = useCallback(() => {
     const Ctor = getRecognitionCtor();
-    if (!Ctor) return;
+    if (!Ctor) {
+      errorRef.current?.("not-supported", "Voice input isn't supported in this browser.");
+      return;
+    }
     if (recRef.current) {
       try { recRef.current.abort(); } catch {}
     }
@@ -76,7 +82,20 @@ export function useVoiceInput(opts: UseVoiceInputOptions = {}) {
         finalRef.current?.(finalText.trim());
       }
     };
-    rec.onerror = () => setListening(false);
+    rec.onerror = (e: any) => {
+      const code = e?.error ?? "error";
+      const map: Record<string, string> = {
+        "not-allowed": "Microphone permission was blocked. Open the app in a new tab and allow mic access.",
+        "service-not-allowed": "Microphone is blocked by the browser or site permissions.",
+        "no-speech": "No speech detected. Try again and speak clearly.",
+        "audio-capture": "No microphone found. Connect one and try again.",
+        "network": "Speech recognition needs a network connection.",
+        "aborted": "",
+      };
+      const msg = map[code] ?? `Voice error: ${code}`;
+      if (msg) errorRef.current?.(code, msg);
+      setListening(false);
+    };
     rec.onend = () => {
       setListening(false);
       setInterim("");
@@ -85,7 +104,8 @@ export function useVoiceInput(opts: UseVoiceInputOptions = {}) {
     try {
       rec.start();
       setListening(true);
-    } catch {
+    } catch (err: any) {
+      errorRef.current?.("start-failed", err?.message ?? "Could not start voice input.");
       setListening(false);
     }
   }, [lang, continuous]);
