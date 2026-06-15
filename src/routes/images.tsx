@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { imageStore, type ImageItem } from "@/lib/threads";
+import { VoiceButton } from "@/components/VoiceButton";
 
 
 export const Route = createFileRoute("/images")({
@@ -126,22 +127,30 @@ function ImagesPage() {
                 </button>
               ))}
             </div>
-            <Button
-              onClick={() => generate()}
-              disabled={loading || !prompt.trim()}
-              className="group relative overflow-hidden"
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="mr-1 h-4 w-4 animate-spin" /> Generating
-                </>
-              ) : (
-                <>
-                  <Sparkles className="mr-1 h-4 w-4 transition-transform group-hover:rotate-12" />
-                  Generate
-                </>
-              )}
-            </Button>
+            <div className="flex items-center gap-2">
+              <VoiceButton
+                size="icon"
+                onTranscript={(t) =>
+                  setPrompt((prev) => (prev ? prev + " " + t : t))
+                }
+              />
+              <Button
+                onClick={() => generate()}
+                disabled={loading || !prompt.trim()}
+                className="group relative overflow-hidden"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="mr-1 h-4 w-4 animate-spin" /> Generating
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="mr-1 h-4 w-4 transition-transform group-hover:rotate-12" />
+                    Generate
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
         </motion.div>
 
