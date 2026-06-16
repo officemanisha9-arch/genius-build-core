@@ -1,4 +1,25 @@
 import process from "node:process";
+import { existsSync, readFileSync } from "node:fs";
+import { resolve } from "node:path";
+
+function readLocalEnvValue(name: string) {
+  for (const file of [".env.local", ".env"]) {
+    const path = resolve(process.cwd(), file);
+    if (!existsSync(path)) continue;
+
+    const line = readFileSync(path, "utf8")
+      .split(/\r?\n/)
+      .find((entry) => entry.trim().startsWith(`${name}=`));
+
+    if (!line) continue;
+    return line
+      .slice(line.indexOf("=") + 1)
+      .trim()
+      .replace(/^['"]|['"]$/g, "");
+  }
+
+  return undefined;
+}
 
 // Server-only config. The .server.ts suffix prevents Vite from bundling
 // this file into the client — values here never reach the browser.
@@ -23,4 +44,8 @@ export function getServerConfig() {
     //   databaseUrl: process.env.DATABASE_URL,
     //   stripeSecretKey: process.env.STRIPE_SECRET_KEY,
   };
+}
+
+export function getLovableApiKey() {
+  return process.env.LOVABLE_API_KEY || readLocalEnvValue("LOVABLE_API_KEY");
 }
