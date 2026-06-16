@@ -9,18 +9,16 @@ export const Route = createFileRoute("/api/generate-image")({
         const key = process.env.LOVABLE_API_KEY;
         if (!key) return new Response("Missing LOVABLE_API_KEY", { status: 500 });
 
-        const upstream = await fetch("https://ai.gateway.lovable.dev/v1/images/generations", {
+        const upstream = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
           method: "POST",
           headers: {
             Authorization: `Bearer ${key}`,
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            model: "openai/gpt-image-2",
-            prompt,
-            quality: "low",
-            size: "1024x1024",
-            n: 1,
+            model: "google/gemini-2.5-flash-image",
+            messages: [{ role: "user", content: prompt }],
+            modalities: ["image", "text"],
           }),
         });
 
@@ -30,10 +28,13 @@ export const Route = createFileRoute("/api/generate-image")({
           return new Response(text, { status: upstream.status });
         }
         const data = (await upstream.json()) as {
-          data?: Array<{ url?: string; b64_json?: string }>;
+          choices?: Array<{
+            message?: {
+              images?: Array<{ image_url?: { url?: string } }>;
+            };
+          }>;
         };
-        const first = data.data?.[0];
-        const url = first?.url ?? (first?.b64_json ? `data:image/png;base64,${first.b64_json}` : null);
+        const url = data.choices?.[0]?.message?.images?.[0]?.image_url?.url ?? null;
         if (!url) return new Response("No image returned", { status: 500 });
 
         return Response.json({ url });
