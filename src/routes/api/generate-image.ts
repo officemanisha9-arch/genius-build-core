@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { getLovableApiKey } from "@/lib/config.server";
 
 export const Route = createFileRoute("/api/generate-image")({
   server: {
@@ -6,13 +7,14 @@ export const Route = createFileRoute("/api/generate-image")({
       POST: async ({ request }) => {
         const { prompt } = (await request.json()) as { prompt: string };
         if (!prompt) return new Response("Missing prompt", { status: 400 });
-        const key = process.env.LOVABLE_API_KEY;
-        if (!key) return new Response("Missing LOVABLE_API_KEY", { status: 500 });
+        const key = getLovableApiKey();
+        if (!key) return new Response("Missing LOVABLE_API_KEY. Add it to .env.local for local dev.", { status: 500 });
 
         const upstream = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
           method: "POST",
           headers: {
-            Authorization: `Bearer ${key}`,
+            "Lovable-API-Key": key,
+            "X-Lovable-AIG-SDK": "manual-fetch",
             "Content-Type": "application/json",
           },
           body: JSON.stringify({

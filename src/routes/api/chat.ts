@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { convertToModelMessages, streamText, type UIMessage } from "ai";
 import { createLovableAiGatewayProvider } from "@/lib/ai-gateway.server";
+import { getLovableApiKey } from "@/lib/config.server";
 
 type Mode = "writer" | "brainstorm" | "code";
 
@@ -21,8 +22,8 @@ export const Route = createFileRoute("/api/chat")({
           messages: UIMessage[];
           mode?: Mode;
         };
-        const key = process.env.LOVABLE_API_KEY;
-        if (!key) return new Response("Missing LOVABLE_API_KEY", { status: 500 });
+        const key = getLovableApiKey();
+        if (!key) return new Response("Missing LOVABLE_API_KEY. Add it to .env.local for local dev.", { status: 500 });
 
         const gateway = createLovableAiGatewayProvider(key);
         const result = streamText({
