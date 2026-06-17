@@ -49,3 +49,7 @@ export function getServerConfig() {
 export function getLovableApiKey() {
   return process.env.LOVABLE_API_KEY || readLocalEnvValue("LOVABLE_API_KEY");
 }
+
+export function getOpenAIKey() {
+  return process.env.OPENAI_API_KEY || readLocalEnvValue("OPENAI_API_KEY");
+}
