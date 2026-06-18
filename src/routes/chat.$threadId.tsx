@@ -356,6 +356,17 @@ function extractText(m: UIMessage): string {
   return m.parts.map((p) => (p.type === "text" ? p.text : "")).join("");
 }
 
+type FilePart = { type: string; url?: string; mediaType?: string };
+function extractUserFiles(m: UIMessage): Array<{ url: string }> {
+  const out: Array<{ url: string }> = [];
+  for (const p of m.parts as unknown as FilePart[]) {
+    if (p.type === "file" && p.url && (p.mediaType ?? "").startsWith("image/")) {
+      out.push({ url: p.url });
+    }
+  }
+  return out;
+}
+
 type ToolImagePart = {
   type: string;
   state?: string;
