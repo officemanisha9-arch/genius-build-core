@@ -325,22 +325,76 @@ function ChatWindow({ threadId }: { threadId: string }) {
         <ConversationScrollButton />
       </Conversation>
 
-      <div className="border-t border-border bg-background/80 px-4 py-4 backdrop-blur">
+      <div
+        className="border-t border-border bg-background/80 px-4 py-4 backdrop-blur"
+        onDragOver={(e) => { e.preventDefault(); }}
+        onDrop={(e) => { e.preventDefault(); addFiles(e.dataTransfer.files); }}
+      >
         <div className="mx-auto max-w-3xl">
+          {attachments.length > 0 && (
+            <div className="mb-2 flex flex-wrap gap-2">
+              {attachments.map((f, i) => {
+                const url = URL.createObjectURL(f);
+                return (
+                  <div key={i} className="relative h-16 w-16 overflow-hidden rounded-md border border-border">
+                    <img src={url} alt={f.name} className="h-full w-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => removeAttachment(i)}
+                      className="absolute right-0 top-0 grid h-5 w-5 place-items-center rounded-bl-md bg-background/80 text-foreground hover:bg-destructive hover:text-destructive-foreground"
+                      aria-label="Remove"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            multiple
+            className="hidden"
+            onChange={(e) => { addFiles(e.target.files); e.target.value = ""; }}
+          />
           <PromptInput onSubmit={() => submit()}>
             <PromptInputTextarea
               ref={textareaRef}
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder={`${Mode.placeholder}  ·  /image <prompt>`}
+              onPaste={(e) => {
+                const imgs = Array.from(e.clipboardData.files).filter((f) => f.type.startsWith("image/"));
+                if (imgs.length) {
+                  e.preventDefault();
+                  const dt = new DataTransfer();
+                  for (const f of imgs) dt.items.add(f);
+                  addFiles(dt.files);
+                }
+              }}
+              placeholder={`${Mode.placeholder}  ·  /image <prompt>  ·  attach or paste images`}
             />
             <PromptInputFooter className="justify-between">
-              <VoiceButton onTranscript={(t) => setInput((p) => (p ? p + " " + t : t))} />
-              <PromptInputSubmit status={status} disabled={!input.trim()} />
+              <div className="flex items-center gap-1">
+                <Button
+                  type="button"
+                  size="icon"
+                  variant="ghost"
+                  className="h-8 w-8"
+                  onClick={() => fileInputRef.current?.click()}
+                  aria-label="Attach image"
+                >
+                  <Paperclip className="h-4 w-4" />
+                </Button>
+                <VoiceButton onTranscript={(t) => setInput((p) => (p ? p + " " + t : t))} />
+              </div>
+              <PromptInputSubmit status={status} disabled={!input.trim() && attachments.length === 0} />
             </PromptInputFooter>
           </PromptInput>
         </div>
       </div>
+
 
       <CodeDrawer
         open={!!drawer}
