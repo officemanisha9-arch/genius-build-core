@@ -150,9 +150,18 @@ function ChatWindow({ threadId }: { threadId: string }) {
 
   const submit = () => {
     const v = input.trim();
-    if (!v || isLoading) return;
-    sendMessage({ text: v });
+    if ((!v && attachments.length === 0) || isLoading) return;
+    const fl = attachments.length
+      ? (() => {
+          const dt = new DataTransfer();
+          for (const f of attachments) dt.items.add(f);
+          return dt.files;
+        })()
+      : undefined;
+    sendMessage({ text: v || "(image)", files: fl });
     setInput("");
+    setAttachments([]);
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const deleteMessage = (id: string) => {
