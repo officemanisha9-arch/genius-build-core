@@ -3,7 +3,7 @@ import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, type UIMessage } from "ai";
 import { useEffect, useMemo, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
-import { Feather, Lightbulb, Code2, Download, ImageIcon } from "lucide-react";
+import { Feather, Lightbulb, Code2, Download, ImageIcon, Paperclip, X } from "lucide-react";
 import {
   Conversation,
   ConversationContent,
@@ -58,6 +58,16 @@ function ChatWindow({ threadId }: { threadId: string }) {
   const [drawer, setDrawer] = useState<{ code: string; language: string } | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
+  const [attachments, setAttachments] = useState<File[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const addFiles = (files: FileList | null) => {
+    if (!files) return;
+    const arr = Array.from(files).filter((f) => f.type.startsWith("image/"));
+    if (arr.length) setAttachments((prev) => [...prev, ...arr]);
+  };
+  const removeAttachment = (i: number) => setAttachments((prev) => prev.filter((_, idx) => idx !== i));
+
 
   useEffect(() => {
     const t = threadStore.get(threadId);
@@ -140,9 +150,18 @@ function ChatWindow({ threadId }: { threadId: string }) {
 
   const submit = () => {
     const v = input.trim();
-    if (!v || isLoading) return;
-    sendMessage({ text: v });
+    if ((!v && attachments.length === 0) || isLoading) return;
+    const fl = attachments.length
+      ? (() => {
+          const dt = new DataTransfer();
+          for (const f of attachments) dt.items.add(f);
+          return dt.files;
+        })()
+      : undefined;
+    sendMessage({ text: v || "(image)", files: fl });
     setInput("");
+    setAttachments([]);
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const deleteMessage = (id: string) => {
@@ -224,7 +243,12 @@ function ChatWindow({ threadId }: { threadId: string }) {
                         </div>
                       </div>
                     ) : isUser ? (
-                      <div className="whitespace-pre-wrap">{text}</div>
+                      <div className="flex flex-col gap-2">
+                        {extractUserFiles(m).map((f, i) => (
+                          <img key={i} src={f.url} alt="attachment" className="max-h-64 rounded-md border border-border/40" />
+                        ))}
+                        {text && <div className="whitespace-pre-wrap">{text}</div>}
+                      </div>
                     ) : (
                       <div className="prose prose-sm dark:prose-invert max-w-none prose-headings:font-display prose-headings:tracking-tight prose-code:text-ember prose-code:before:content-none prose-code:after:content-none">
                         <ReactMarkdown
@@ -301,22 +325,76 @@ function ChatWindow({ threadId }: { threadId: string }) {
         <ConversationScrollButton />
       </Conversation>
 
-      <div className="border-t border-border bg-background/80 px-4 py-4 backdrop-blur">
+      <div
+        className="border-t border-border bg-background/80 px-4 py-4 backdrop-blur"
+        onDragOver={(e) => { e.preventDefault(); }}
+        onDrop={(e) => { e.preventDefault(); addFiles(e.dataTransfer.files); }}
+      >
         <div className="mx-auto max-w-3xl">
+          {attachments.length > 0 && (
+            <div className="mb-2 flex flex-wrap gap-2">
+              {attachments.map((f, i) => {
+                const url = URL.createObjectURL(f);
+                return (
+                  <div key={i} className="relative h-16 w-16 overflow-hidden rounded-md border border-border">
+                    <img src={url} alt={f.name} className="h-full w-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => removeAttachment(i)}
+                      className="absolute right-0 top-0 grid h-5 w-5 place-items-center rounded-bl-md bg-background/80 text-foreground hover:bg-destructive hover:text-destructive-foreground"
+                      aria-label="Remove"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            multiple
+            className="hidden"
+            onChange={(e) => { addFiles(e.target.files); e.target.value = ""; }}
+          />
           <PromptInput onSubmit={() => submit()}>
             <PromptInputTextarea
               ref={textareaRef}
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder={`${Mode.placeholder}  ·  /image <prompt>`}
+              onPaste={(e) => {
+                const imgs = Array.from(e.clipboardData.files).filter((f) => f.type.startsWith("image/"));
+                if (imgs.length) {
+                  e.preventDefault();
+                  const dt = new DataTransfer();
+                  for (const f of imgs) dt.items.add(f);
+                  addFiles(dt.files);
+                }
+              }}
+              placeholder={`${Mode.placeholder}  ·  /image <prompt>  ·  attach or paste images`}
             />
             <PromptInputFooter className="justify-between">
-              <VoiceButton onTranscript={(t) => setInput((p) => (p ? p + " " + t : t))} />
-              <PromptInputSubmit status={status} disabled={!input.trim()} />
+              <div className="flex items-center gap-1">
+                <Button
+                  type="button"
+                  size="icon"
+                  variant="ghost"
+                  className="h-8 w-8"
+                  onClick={() => fileInputRef.current?.click()}
+                  aria-label="Attach image"
+                >
+                  <Paperclip className="h-4 w-4" />
+                </Button>
+                <VoiceButton onTranscript={(t) => setInput((p) => (p ? p + " " + t : t))} />
+              </div>
+              <PromptInputSubmit status={status} disabled={!input.trim() && attachments.length === 0} />
             </PromptInputFooter>
           </PromptInput>
         </div>
       </div>
+
 
       <CodeDrawer
         open={!!drawer}
@@ -330,6 +408,17 @@ function ChatWindow({ threadId }: { threadId: string }) {
 
 function extractText(m: UIMessage): string {
   return m.parts.map((p) => (p.type === "text" ? p.text : "")).join("");
+}
+
+type FilePart = { type: string; url?: string; mediaType?: string };
+function extractUserFiles(m: UIMessage): Array<{ url: string }> {
+  const out: Array<{ url: string }> = [];
+  for (const p of m.parts as unknown as FilePart[]) {
+    if (p.type === "file" && p.url && (p.mediaType ?? "").startsWith("image/")) {
+      out.push({ url: p.url });
+    }
+  }
+  return out;
 }
 
 type ToolImagePart = {
