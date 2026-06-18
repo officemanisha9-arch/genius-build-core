@@ -3,7 +3,7 @@ import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, type UIMessage } from "ai";
 import { useEffect, useMemo, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
-import { Feather, Lightbulb, Code2, Download, ImageIcon } from "lucide-react";
+import { Feather, Lightbulb, Code2, Download, ImageIcon, Paperclip, X } from "lucide-react";
 import {
   Conversation,
   ConversationContent,
@@ -58,6 +58,16 @@ function ChatWindow({ threadId }: { threadId: string }) {
   const [drawer, setDrawer] = useState<{ code: string; language: string } | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
+  const [attachments, setAttachments] = useState<File[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const addFiles = (files: FileList | null) => {
+    if (!files) return;
+    const arr = Array.from(files).filter((f) => f.type.startsWith("image/"));
+    if (arr.length) setAttachments((prev) => [...prev, ...arr]);
+  };
+  const removeAttachment = (i: number) => setAttachments((prev) => prev.filter((_, idx) => idx !== i));
+
 
   useEffect(() => {
     const t = threadStore.get(threadId);
