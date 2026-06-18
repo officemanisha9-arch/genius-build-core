@@ -243,7 +243,12 @@ function ChatWindow({ threadId }: { threadId: string }) {
                         </div>
                       </div>
                     ) : isUser ? (
-                      <div className="whitespace-pre-wrap">{text}</div>
+                      <div className="flex flex-col gap-2">
+                        {extractUserFiles(m).map((f, i) => (
+                          <img key={i} src={f.url} alt="attachment" className="max-h-64 rounded-md border border-border/40" />
+                        ))}
+                        {text && <div className="whitespace-pre-wrap">{text}</div>}
+                      </div>
                     ) : (
                       <div className="prose prose-sm dark:prose-invert max-w-none prose-headings:font-display prose-headings:tracking-tight prose-code:text-ember prose-code:before:content-none prose-code:after:content-none">
                         <ReactMarkdown
